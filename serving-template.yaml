@@ -1,49 +1,37 @@
 apiVersion: ai.sap.com/v1alpha1
 kind: ServingTemplate
+
 metadata:
   name: observability-demo
   annotations:
-    scenarios.ai.sap.com/description: "Simple SAP AI Core observability demo"
     scenarios.ai.sap.com/name: "observability-demo"
-    executables.ai.sap.com/description: "HTTP echo service for logs, latency, errors, and metrics"
-    executables.ai.sap.com/name: "observability-demo"
+    scenarios.ai.sap.com/description: "Simple observability test service"
+    executables.ai.sap.com/name: "observability-demo-exec"
+    executables.ai.sap.com/description: "Simple HTTP service for observability testing"
+
   labels:
     scenarios.ai.sap.com/id: "observability-demo"
-    ai.sap.com/version: "0.0.1"
+    ai.sap.com/version: "1.0.0"
 
 spec:
   inputs:
     parameters:
       - name: image
-        default: "docker.io/mendhak/http-https-echo:31"
         type: string
-        description: "Public HTTP echo image used for the observability demo"
-      - name: resourcePlan
-        default: "starter"
-        type: string
-        description: "SAP AI Core resource plan"
-      - name: minReplicas
-        default: "1"
-        type: string
-        description: "Minimum replicas"
-      - name: maxReplicas
-        default: "1"
-        type: string
-        description: "Maximum replicas"
+        default: "mendhak/http-https-echo:31"
+        description: "Public HTTP echo image"
 
   template:
     apiVersion: "serving.kserve.io/v1beta1"
+
     metadata:
-      annotations: |
-        autoscaling.knative.dev/metric: rps
-        autoscaling.knative.dev/target: 10
-        autoscaling.knative.dev/targetBurstCapacity: 10
       labels: |
-        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
+        ai.sap.com/resourcePlan: starter
+
     spec: |
       predictor:
-        minReplicas: {{inputs.parameters.minReplicas}}
-        maxReplicas: {{inputs.parameters.maxReplicas}}
+        minReplicas: 1
+        maxReplicas: 1
         containers:
           - name: kserve-container
             image: "{{inputs.parameters.image}}"
