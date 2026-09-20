@@ -1,0 +1,57 @@
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
+metadata:
+  name: observability-demo
+  annotations:
+    scenarios.ai.sap.com/description: "Simple SAP AI Core observability demo"
+    scenarios.ai.sap.com/name: "observability-demo"
+    executables.ai.sap.com/description: "HTTP echo service for logs, latency, errors, and metrics"
+    executables.ai.sap.com/name: "observability-demo"
+  labels:
+    scenarios.ai.sap.com/id: "observability-demo"
+    ai.sap.com/version: "0.0.1"
+
+spec:
+  inputs:
+    parameters:
+      - name: image
+        default: "docker.io/mendhak/http-https-echo:31"
+        type: string
+        description: "Public HTTP echo image used for the observability demo"
+      - name: resourcePlan
+        default: "starter"
+        type: string
+        description: "SAP AI Core resource plan"
+      - name: minReplicas
+        default: "1"
+        type: string
+        description: "Minimum replicas"
+      - name: maxReplicas
+        default: "1"
+        type: string
+        description: "Maximum replicas"
+
+  template:
+    apiVersion: "serving.kserve.io/v1beta1"
+    metadata:
+      annotations: |
+        autoscaling.knative.dev/metric: rps
+        autoscaling.knative.dev/target: 10
+        autoscaling.knative.dev/targetBurstCapacity: 10
+      labels: |
+        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
+    spec: |
+      predictor:
+        minReplicas: {{inputs.parameters.minReplicas}}
+        maxReplicas: {{inputs.parameters.maxReplicas}}
+        containers:
+          - name: kserve-container
+            image: "{{inputs.parameters.image}}"
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            env:
+              - name: PROMETHEUS_ENABLED
+                value: "true"
+              - name: LOG_IGNORE_PATH
+                value: "/ping"
